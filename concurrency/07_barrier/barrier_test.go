@@ -124,3 +124,15 @@ func TestRoundsDoNotOverlap(t *testing.T) {
 		t.Fatal("участники следующего раунда обогнали предыдущий")
 	}
 }
+func TestNewInvalid(t *testing.T) {
+	for _, n := range []int{0, -1} {
+		func() {
+			defer func() {
+				if recover() == nil {
+					t.Fatalf("New(%d) не вызвал панику", n)
+				}
+			}()
+			New(n)
+		}()
+	}
+}

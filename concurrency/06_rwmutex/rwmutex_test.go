@@ -201,3 +201,36 @@ func BenchmarkReadHeavy(b *testing.B) {
 		}
 	})
 }
+func TestWriterNotStarved(t *testing.T) {
+	var rw RWMutex
+	stop := make(chan struct{})
+	for i := 0; i < 8; i++ {
+		go func() {
+			for {
+				select {
+				case <-stop:
+					return
+				default:
+				}
+				rw.RLock()
+				time.Sleep(100 * time.Microsecond)
+				rw.RUnlock()
+			}
+		}()
+	}
+	time.Sleep(10 * time.Millisecond)
+
+	got := make(chan struct{})
+	go func() {
+		rw.Lock()
+		rw.Unlock()
+		close(got)
+	}()
+
+	select {
+	case <-got:
+	case <-time.After(3 * time.Second):
+		t.Fatal("писатель не получил лок за 3 секунды")
+	}
+	close(stop)
+}

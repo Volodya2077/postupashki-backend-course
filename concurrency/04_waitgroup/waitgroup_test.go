@@ -144,4 +144,16 @@ func TestStress(t *testing.T) {
 			t.Fatalf("раунд %d: счётчик %d", round, counter)
 		}
 	}
+
+}
+func TestCountAfterAdd(t *testing.T) {
+	var wg WaitGroup
+	wg.Add(1)
+	if wg.count != 1 {
+		t.Fatalf("count = %d, ожидалось 1", wg.count)
+	}
+	wg.Done()
+	if wg.count != 0 {
+		t.Fatalf("count = %d, ожидалось 0", wg.count)
+	}
 }

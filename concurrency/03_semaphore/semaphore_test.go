@@ -175,3 +175,57 @@ func BenchmarkAcquireRelease(b *testing.B) {
 		s.Release()
 	}
 }
+
+func TestAvailableAfterSleepers(t *testing.T) {
+	s := New(3)
+
+	var wg sync.WaitGroup
+	for i := 0; i < 40; i++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			s.Acquire()
+			time.Sleep(time.Millisecond)
+			s.Release()
+		}()
+	}
+	wg.Wait()
+
+	if s.Available() != 3 {
+		t.Fatalf("Available вернул %d, ожидалось 3", s.Available())
+	}
+}
+
+func TestNeverMoreThanLimitStaggered(t *testing.T) {
+	const limit = 2
+	s := New(limit)
+
+	var inside, peak int32
+	var wg sync.WaitGroup
+
+	for batch := 0; batch < 20; batch++ {
+		for i := 0; i < 10; i++ {
+			wg.Add(1)
+			go func() {
+				defer wg.Done()
+				s.Acquire()
+				cur := atomic.AddInt32(&inside, 1)
+				for {
+					p := atomic.LoadInt32(&peak)
+					if cur <= p || atomic.CompareAndSwapInt32(&peak, p, cur) {
+						break
+					}
+				}
+				time.Sleep(time.Millisecond)
+				atomic.AddInt32(&inside, -1)
+				s.Release()
+			}()
+		}
+		time.Sleep(time.Millisecond)
+	}
+	wg.Wait()
+
+	if peak > limit {
+		t.Fatalf("одновременно внутри было %d, лимит %d", peak, limit)
+	}
+}
