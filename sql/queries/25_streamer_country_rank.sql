@@ -6,3 +6,22 @@
 -- Порядок: country по возрастанию, внутри страны country_rank по возрастанию
 -- Строк:   16
 
+WITH ranked AS (
+    SELECT player_id, nickname, country, mmr,
+           RANK() OVER (PARTITION BY country ORDER BY mmr DESC) AS country_rank,
+           COUNT(*) OVER (PARTITION BY country) AS country_players
+    FROM players
+)
+SELECT r.nickname AS player,
+       r.country,
+       r.mmr,
+       r.country_rank,
+       r.country_players,
+       t.tag AS team_tag,
+       pl.name AS platform
+FROM ranked r
+JOIN streamers s ON s.player_id = r.player_id
+JOIN platforms pl ON pl.platform_id = s.platform_id
+JOIN team_members tm ON tm.player_id = r.player_id AND tm.left_at IS NULL
+JOIN teams t ON t.team_id = tm.team_id
+ORDER BY r.country, r.country_rank;

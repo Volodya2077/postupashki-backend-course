@@ -6,3 +6,9 @@
 -- Порядок: duration_sec по убыванию, при равенстве match_id по возрастанию
 -- Строк:   56
 
+SELECT match_id, matches.started_at::date AS match_date, duration_sec, tournaments.name AS tournament_name FROM matches
+LEFT JOIN tournaments ON tournaments.tournament_id = matches.tournament_id
+WHERE matches.duration_sec >= 4700
+ORDER BY duration_sec DESC, match_id
+LIMIT 56;
+

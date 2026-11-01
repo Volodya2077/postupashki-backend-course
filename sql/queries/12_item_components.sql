@@ -6,3 +6,12 @@
 -- Порядок: item_name по возрастанию, внутри предмета component_name по возрастанию
 -- Строк:   36
 
+SELECT i.name AS item_name,
+       c.name AS component_name,
+       r.quantity,
+       c.cost AS component_cost
+FROM item_recipe r
+JOIN items i ON i.item_id = r.item_id
+JOIN items c ON c.item_id = r.component_id
+WHERE r.component_id IN (SELECT item_id FROM item_recipe)
+ORDER BY i.name, c.name;

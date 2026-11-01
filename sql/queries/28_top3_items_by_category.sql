@@ -6,3 +6,22 @@
 -- Порядок: category по возрастанию, затем place по возрастанию
 -- Строк:   9
 
+WITH classified AS (
+    SELECT i.name, i.cost,
+           CASE 
+            WHEN i.is_recipe THEN 'recipe'
+            WHEN i.item_id IN (SELECT item_id FROM item_recipe) THEN 'assembled'
+            ELSE 'basic'
+           END AS category,
+           (SELECT COUNT(*) FROM match_items mi WHERE mi.item_id = i.item_id) AS purchases
+    FROM items i
+),
+ranked AS (
+    SELECT category, name, cost, purchases,
+           ROW_NUMBER() OVER (PARTITION BY category ORDER BY cost DESC, name) AS place
+    FROM classified
+)
+SELECT category, place, name, cost, purchases
+FROM ranked
+WHERE place <= 3
+ORDER BY category, place;
