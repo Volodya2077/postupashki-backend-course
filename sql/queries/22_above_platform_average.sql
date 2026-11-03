@@ -6,3 +6,16 @@
 -- Порядок: followers по убыванию, при равенстве streamer по возрастанию
 -- Строк:   16
 
+SELECT s.nickname AS streamer,
+       p.name AS platform,
+       s.followers,
+       ROUND(pa.avg_followers, 2) AS platform_avg,
+       t.tag AS team
+FROM streamers s
+JOIN platforms p ON p.platform_id = s.platform_id
+JOIN (SELECT platform_id, AVG(followers) AS avg_followers FROM streamers GROUP BY platform_id) pa
+     ON pa.platform_id = s.platform_id
+LEFT JOIN team_members tm ON tm.player_id = s.player_id AND tm.left_at IS NULL
+LEFT JOIN teams t ON t.team_id = tm.team_id
+WHERE s.followers > pa.avg_followers
+ORDER BY s.followers DESC, s.nickname;
