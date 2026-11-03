@@ -7,21 +7,27 @@
 -- Строк:   9
 
 WITH classified AS (
-    SELECT i.name, i.cost,
-           CASE 
+    SELECT i.item_id, i.name, i.cost,
+           CASE
             WHEN i.is_recipe THEN 'recipe'
             WHEN i.item_id IN (SELECT item_id FROM item_recipe) THEN 'assembled'
             ELSE 'basic'
-           END AS category,
-           (SELECT COUNT(*) FROM match_items mi WHERE mi.item_id = i.item_id) AS purchases
+           END AS category
     FROM items i
 ),
 ranked AS (
-    SELECT category, name, cost, purchases,
+    SELECT item_id, category, name, cost,
            ROW_NUMBER() OVER (PARTITION BY category ORDER BY cost DESC, name) AS place
     FROM classified
+),
+purchase_count AS (
+    SELECT item_id, COUNT(*) AS cnt
+    FROM match_items
+    GROUP BY item_id
 )
-SELECT category, place, name, cost, purchases
-FROM ranked
-WHERE place <= 3
-ORDER BY category, place;
+SELECT r.category, r.place, r.name, r.cost, COALESCE(pc.cnt, 0) AS purchases
+FROM ranked r
+LEFT JOIN purchase_count pc ON pc.item_id = r.item_id
+WHERE r.place <= 3
+ORDER BY r.category, r.place;
+

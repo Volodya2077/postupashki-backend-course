@@ -7,10 +7,9 @@
 
 SELECT streamers.nickname AS streamer, platforms.name AS platform, players.nickname AS player, teams.name AS team, teams.tag, followers FROM streamers 
 JOIN players ON players.player_id = streamers.player_id  
-LEFT JOIN team_members ON team_members.player_id = players.player_id AND team_members.left_at IS NULL
-LEFT JOIN teams ON teams.team_id = team_members.team_id
+JOIN team_members ON team_members.player_id = players.player_id AND team_members.left_at IS NULL
+JOIN teams ON teams.team_id = team_members.team_id
 LEFT JOIN platforms ON platforms.platform_id = streamers.platform_id
-ORDER BY followers DESC, streamer
-LIMIT 16;
+ORDER BY followers DESC, streamer;
 
 

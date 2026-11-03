@@ -6,16 +6,22 @@
 -- Порядок: started_at по возрастанию
 -- Строк:   2
 
-WITH stats AS (
+WITH match_counts AS (
+    SELECT tournament_id, COUNT(*) AS cnt
+    FROM matches
+    GROUP BY tournament_id
+),
+stats AS (
     SELECT t.name AS tournament,
            t.started_at,
            t.prize_pool,
-           COALESCE((SELECT SUM(p.prize_pool) FROM tournaments p WHERE p.started_at < t.started_at), 0) AS prev_total,
-           (SELECT COUNT(*) FROM tournaments p WHERE p.started_at < t.started_at) AS prev_count,
-           (SELECT COUNT(*) FROM matches m WHERE m.tournament_id = t.tournament_id) AS matches_played
+           COALESCE(SUM(t.prize_pool) OVER w, 0) AS prev_total,
+           COUNT(*) OVER w AS prev_count,
+           COALESCE(mc.cnt, 0) AS matches_played
     FROM tournaments t
+    LEFT JOIN match_counts mc ON mc.tournament_id = t.tournament_id
+    WINDOW w AS (ORDER BY t.started_at GROUPS BETWEEN UNBOUNDED PRECEDING AND 1 PRECEDING)
 )
 SELECT * FROM stats
 WHERE prize_pool > prev_total
 ORDER BY started_at;
-

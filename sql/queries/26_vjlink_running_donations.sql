@@ -16,5 +16,5 @@ FROM streamers sr
 JOIN streams st ON st.streamer_id = sr.streamer_id
 JOIN stream_donations sd ON sd.stream_id = st.stream_id
 
-WHERE sr.nickname = 'Вжлинк' AND st.started_at >= '2021-01-01' AND st.started_at < '2022-01-01'
+WHERE sr.nickname = 'Вжлинк' AND st.started_at >= '2021-01-01 00:00:00+00'::timestamptz AND st.started_at < '2022-01-01 00:00:00+00'::timestamptz
 ORDER BY sd.stream_id, sd.sent_at_sec, sd.donation_id;
